@@ -3,30 +3,34 @@ package main
 import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	aggregator_v3_interface "hw3/contracts"
+	"github.com/ethereum/go-ethereum/event"
+	proxy "hw3/contracts"
+	aggregator "hw3/contracts/interfaces"
 	"log"
 	"math/big"
 )
 
-type ContractClient struct {
+type ProxyWrapper struct {
 	Name     string
-	contract *aggregator_v3_interface.AggregatorV3Interface
+	contract *proxy.ProxyContract
 	address  common.Address
+	cl       *ethclient.Client
 }
 
-func NewContractClient(name string, address common.Address, client *ethclient.Client) (*ContractClient, error) {
-	contract, err := aggregator_v3_interface.NewAggregatorV3Interface(address, client)
+func NewContractClient(name string, address common.Address, client *ethclient.Client) (*ProxyWrapper, error) {
+	contract, err := proxy.NewProxyContract(address, client)
 	if err != nil {
 		return nil, err
 	}
-	return &ContractClient{
+	return &ProxyWrapper{
 		Name:     name,
 		contract: contract,
 		address:  address,
+		cl:       client,
 	}, nil
 }
 
-func (c *ContractClient) GetLatestTimestamp() (int64, error) {
+func (c *ProxyWrapper) GetLatestTimestamp() (int64, error) {
 	latestRound, err := c.contract.LatestRoundData(nil)
 	if err != nil {
 		return 0, err
@@ -34,7 +38,7 @@ func (c *ContractClient) GetLatestTimestamp() (int64, error) {
 	return latestRound.StartedAt.Int64(), nil
 }
 
-func (c *ContractClient) GetPrice() (*big.Float, error) {
+func (c *ProxyWrapper) GetPrice() (*big.Float, error) {
 	roundData, err := c.contract.LatestRoundData(nil)
 	if err != nil {
 		return nil, err
@@ -59,4 +63,30 @@ func divideBigInt(num1 *big.Int, num2 *big.Int) *big.Float {
 	num2BigFloat := new(big.Float).SetInt(num2)
 	result := new(big.Float).Quo(num1BigFloat, num2BigFloat)
 	return result
+}
+
+type Subscription struct {
+	event.Subscription
+	data <-chan *aggregator.AggregatorInterfaceAnswerUpdated
+}
+
+func (c *ProxyWrapper) SubscribeOnUpdate() (*Subscription, error) {
+
+	aggregAddr, err := c.contract.Aggregator(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	aggreg, err := aggregator.NewAggregatorInterface(aggregAddr, c.cl)
+
+	answerUpdated := make(chan *aggregator.AggregatorInterfaceAnswerUpdated)
+	updated, err := aggreg.WatchAnswerUpdated(nil, answerUpdated, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Subscription{
+		Subscription: updated,
+		data:         answerUpdated,
+	}, nil
 }

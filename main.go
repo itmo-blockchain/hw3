@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	wnb = flag.Bool("without new block", false, "delete new block events")
-	wnp = flag.Bool("without new price", false, "delete new price events")
+	wnb = flag.Bool("without-new-block", false, "delete new block events")
+	wnp = flag.Bool("without-new-price", false, "delete new price events")
 )
 
 type Config struct {

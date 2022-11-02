@@ -18,6 +18,11 @@ To run the project run with environment variable `ETHEREUM_RPC` set to the RPC e
 docker run blockchain-monitor --env-file=".env"
 ```
 
+You can pass the following flags to the program:
+
+- -without-new-block - disables monitoring of new blocks
+- -without-new-price - disables monitoring of new prices
+
 ## Example
 
 ```shell

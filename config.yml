@@ -1,0 +1,7 @@
+contracts:
+  - name: EthUsdt
+    address: 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419
+  - name: LinkEth
+    address: 0xDC530D9457755926550b59e8ECcdaE7624181557
+  - name: UsdtEth
+    address: 0xEe9F2375b4bdF6387aa8265dD4FB8F16512A1d46

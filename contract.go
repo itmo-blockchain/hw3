@@ -44,13 +44,17 @@ func (c *ProxyWrapper) GetPrice() (*big.Float, error) {
 		return nil, err
 	}
 
+	return c.CalculatePrice(roundData.Answer)
+}
+
+func (c *ProxyWrapper) CalculatePrice(a *big.Int) (*big.Float, error) {
 	decimal, err := c.contract.Decimals(nil)
 	if err != nil {
 		return nil, err
 	}
 
 	decimalBigInt := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(decimal)), nil)
-	price := divideBigInt(roundData.Answer, decimalBigInt)
+	price := divideBigInt(a, decimalBigInt)
 
 	return price, nil
 }
